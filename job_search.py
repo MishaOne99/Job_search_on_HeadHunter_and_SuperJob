@@ -5,7 +5,7 @@ import os
 import argparse
 from dotenv import load_dotenv
 from requests import get
-from terminaltables import AsciiTable
+from display_statistics import display_statistics_working
 
 
 ID_MOSCOW_HH = 1
@@ -35,7 +35,7 @@ def predict_rub_salarys_for_HeadHunter(vacancies: list) -> list[int]:
         payment_to = salary['to'] if salary['to'] else 0
         
         average_salary = predict_salary(payment_from, payment_to)
-        vacancy_salaries.append(average_salary)
+        vacancy_salaries.append(int(average_salary))
 
     return vacancy_salaries
 
@@ -59,7 +59,7 @@ def predict_rub_salarys_for_SuperJob(vacancies: list) -> list[int]:
         if (payment_from == 0 and payment_to == 0) or currency != 'rub':
             continue
         average_salary = predict_salary(payment_from, payment_to)
-        vacancy_salaries.append(average_salary)
+        vacancy_salaries.append(int(average_salary))
     
     return vacancy_salaries
 
@@ -81,38 +81,6 @@ def predict_salary(salary_from: int, salary_to: int) -> int:
     return((salary_from + salary_to) / 2)
 
 
-def display_statistics_working_with_SuperJob(information_vacancies: dict) -> None:
-    """Выводит в таблице, статистику запрашиваемых вакансий с сайта SuperJob.
-
-    Args:
-        information_vacancies (dict): Статистика по запрашиваемой вакансии
-    """
-    table_data = [['Наименование вакансий', 'Вакансий найдено', 'Вакансий обработано', 'Средняя зарплата']]
-    
-    for language_name, info_vacancy in information_vacancies.items():
-        table_data.append([language_name, *info_vacancy.values()])
-    
-    fished_table = AsciiTable(table_data, 'SuperJob MOSCOW')
-    
-    print(fished_table.table)
-
-
-def display_statistics_working_with_HeadHunter(information_vacancies: dict) -> None:
-    """Выводит в таблице, статистику запрашиваемых вакансий с сайта HeadHunter.
-
-    Args:
-        information_vacancies (dict): Статистика по запрашиваемой вакансии
-    """
-    table_data = [['Наименование вакансии', 'Вакансий найдено', 'Вакансий обработано', 'Средняя зарплата']]
-    
-    for language_name, info_vacancy in information_vacancies.items():
-        table_data.append([language_name, *info_vacancy.values()])
-    
-    fished_table = AsciiTable(table_data, 'HeadHunter MOSCOW')
-    
-    print(fished_table.table)
-
-
 def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
     """Сбор статистики запрашиваемых вакансий с сайта HeadHunter.
 
@@ -127,6 +95,7 @@ def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
     for vacancy in vacanсies:
         found_vacancies = []
 
+        total_vacancies = None
         page = 0
         pages_number = 1
 
@@ -138,13 +107,17 @@ def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
 
             page_payload = page_response.json()
             found_vacancies.extend(page_payload['items'])
+
             if pages_number != page_payload['pages']:
                 pages_number = page_payload['pages']
+            if not total_vacancies:
+                total_vacancies = page_payload['found']
+            
             page += 1
 
         salary_vacancy = predict_rub_salarys_for_HeadHunter(found_vacancies)
 
-        statistic_vacancies[vacancy] = {"vacancies_found":page_payload['found'],
+        statistic_vacancies[vacancy] = {"vacancies_found": total_vacancies,
                                         "vacancies_processed": len(salary_vacancy), 
                                         "average_salary": int(sum(salary_vacancy)/len(salary_vacancy)) if len(salary_vacancy) != 0 
                                                                                                        else None}
@@ -166,14 +139,28 @@ def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
     statistic_vacancies = {}
 
     for vacancy in vacanсies:
-        payload = {'town': ID_MOSCOW_SJ, 'keyword': vacancy}
+        found_vacancies = []
+        total_vacancies = None
+        page = 0
+        continuation_pages = True
 
-        response = get('https://api.superjob.ru/2.0/vacancies/', headers=headers, params=payload)
-        response.raise_for_status()
+        while continuation_pages:
+            payload = {'town': ID_MOSCOW_SJ, 'keyword': vacancy, 'page': page}
+
+            response = get('https://api.superjob.ru/2.0/vacancies/', headers=headers, params=payload)
+            response.raise_for_status()
+
+            page_payload = response.json()
+            continuation_pages = page_payload['more']
+            found_vacancies.extend(page_payload['objects'])
+            page += 1
+
+            if not total_vacancies:
+                total_vacancies = page_payload['total']
+
+        salary_vacancy = predict_rub_salarys_for_SuperJob(found_vacancies)
         
-        salary_vacancy = predict_rub_salarys_for_SuperJob(response.json()['objects'])
-        
-        statistic_vacancies[vacancy] = {"vacancies_found": response.json()['total'],
+        statistic_vacancies[vacancy] = {"vacancies_found": total_vacancies,
                                         "vacancies_processed": len(salary_vacancy), 
                                         "average_salary": int(sum(salary_vacancy)/len(salary_vacancy)) if len(salary_vacancy) != 0 
                                                                                                        else None}
@@ -189,8 +176,8 @@ def main():
     args = parser.parse_args()
 
     vacancies = args.Vacancies
-    display_statistics_working_with_HeadHunter(collect_job_statistics_from_HeadHunter(vacancies))
-    display_statistics_working_with_SuperJob(collect_job_statistics_from_SuperJob(vacancies))
+    display_statistics_working(collect_job_statistics_from_HeadHunter(vacancies), 'HeadHunter MOSCOW')
+    display_statistics_working(collect_job_statistics_from_SuperJob(vacancies), 'SuperJob MOSCOW')
 
 
 if __name__ == '__main__':
