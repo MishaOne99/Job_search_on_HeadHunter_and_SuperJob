@@ -31,11 +31,13 @@ def predict_rub_salarys_for_HeadHunter(vacancies: list) -> list[int]:
             continue
         if salary['currency'] != 'RUR':
             continue
+        
         payment_from = salary['from'] if salary['from'] else 0
         payment_to = salary['to'] if salary['to'] else 0
-        
-        average_salary = predict_salary(payment_from, payment_to)
-        vacancy_salaries.append(int(average_salary))
+
+        if (not payment_from and not payment_to):
+            average_salary = predict_salary(payment_from, payment_to)
+            vacancy_salaries.append(int(average_salary))
 
     return vacancy_salaries
 
@@ -173,7 +175,7 @@ def main():
     """
     load_dotenv()
     secret_key = os.getenv('SECRET_KEY_SUPER_JOB')
-    
+
     parser = argparse.ArgumentParser(description= 'Shows job statistics from Headhunter and SuperJob')
     parser.add_argument('Vacancies', type=str, nargs='+', default='Программист', help='Enter a list of professions that you are interested in')
     args = parser.parse_args()
