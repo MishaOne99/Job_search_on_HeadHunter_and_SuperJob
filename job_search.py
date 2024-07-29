@@ -27,7 +27,7 @@ def predict_rub_salarys_for_HeadHunter(vacancies: list) -> list[int]:
         
         salary = vacancy['salary']
         
-        if salary is None:
+        if not salary:
             continue
         if salary['currency'] != 'RUR':
             continue
