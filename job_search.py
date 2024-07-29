@@ -124,7 +124,7 @@ def collect_job_statistics_from_HeadHunter(programming_languages: list[str]) -> 
     return vacancy_statistics
 
 
-def collect_job_statistics_from_SuperJob(programming_languages: list[str]) -> dict:
+def collect_job_statistics_from_SuperJob(programming_languages: list[str], key: str) -> dict:
     """Сбор статистики запрашиваемых вакансий с сайта SuperJob.
 
     Args:
@@ -132,9 +132,9 @@ def collect_job_statistics_from_SuperJob(programming_languages: list[str]) -> di
 
     Returns:
         dict: Статистика запрашиваемых вакансий
+        key: Ключ доступа к API
     """
-    secret_key = os.getenv('SECRET_KEY_SUPER_JOB')
-    headers = {'X-Api-App-Id': secret_key}
+    headers = {'X-Api-App-Id': key}
 
     vacancy_statistics = {}
 
@@ -172,13 +172,15 @@ def main():
     """Позволяет работать из командной строки
     """
     load_dotenv()
+    secret_key = os.getenv('SECRET_KEY_SUPER_JOB')
+    
     parser = argparse.ArgumentParser(description= 'Shows job statistics from Headhunter and SuperJob')
     parser.add_argument('Vacancies', type=str, nargs='+', default='Программист', help='Enter a list of professions that you are interested in')
     args = parser.parse_args()
 
     vacancies = args.Vacancies
     display_statistics_working(collect_job_statistics_from_HeadHunter(vacancies), 'HeadHunter MOSCOW')
-    display_statistics_working(collect_job_statistics_from_SuperJob(vacancies), 'SuperJob MOSCOW')
+    display_statistics_working(collect_job_statistics_from_SuperJob(vacancies, key=secret_key), 'SuperJob MOSCOW')
 
 
 if __name__ == '__main__':
