@@ -56,7 +56,7 @@ def predict_rub_salarys_for_SuperJob(vacancies: list) -> list[int]:
         payment_to = vacancy['payment_to']
         currency = vacancy['currency']
         
-        if (payment_from == 0 and payment_to == 0) or currency != 'rub':
+        if (not payment_from and not payment_to) or currency != 'rub':
             continue
         average_salary = predict_salary(payment_from, payment_to)
         vacancy_salaries.append(int(average_salary))
@@ -119,7 +119,7 @@ def collect_job_statistics_from_HeadHunter(programming_languages: list[str]) -> 
 
         vacancy_statistics[programming_language] = {"vacancies_found": total_vacancies,
                                         "vacancies_processed": len(vacancy_salaries), 
-                                        "average_salary": int(sum(vacancy_salaries)/len(vacancy_salaries)) if len(vacancy_salaries) != 0 
+                                        "average_salary": int(sum(vacancy_salaries)/len(vacancy_salaries)) if len(vacancy_salaries) 
                                                                                                        else None}
     return vacancy_statistics
 
@@ -162,7 +162,7 @@ def collect_job_statistics_from_SuperJob(programming_languages: list[str]) -> di
         
         vacancy_statistics[programming_language] = {"vacancies_found": total_vacancies,
                                         "vacancies_processed": len(vacancy_salaries), 
-                                        "average_salary": int(sum(vacancy_salaries)/len(vacancy_salaries)) if len(vacancy_salaries) != 0 
+                                        "average_salary": int(sum(vacancy_salaries)/len(vacancy_salaries)) if len(vacancy_salaries) 
                                                                                                        else None}
     
     return vacancy_statistics
