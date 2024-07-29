@@ -81,7 +81,7 @@ def predict_salary(salary_from: int, salary_to: int) -> int:
     return((salary_from + salary_to) / 2)
 
 
-def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
+def collect_job_statistics_from_HeadHunter(programming_languages: list[str]) -> dict:
     """Сбор статистики запрашиваемых вакансий с сайта HeadHunter.
 
     Args:
@@ -92,7 +92,7 @@ def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
     """
     vacancy_statistics = {}
 
-    for vacancy in vacanсies:
+    for programming_language in programming_languages:
         found_vacancies = []
 
         total_vacancies = None
@@ -100,7 +100,7 @@ def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
         pages_number = 1
 
         while page < pages_number:
-            payload = payload = {'text': vacancy, 'area': MOSCOW_ID_HH, 'enable_snippets': 'true', 'page': page, 'per_page': 100}
+            payload = payload = {'text': programming_language, 'area': MOSCOW_ID_HH, 'enable_snippets': 'true', 'page': page, 'per_page': 100}
 
             page_response = get('https://api.hh.ru/vacancies', params=payload)
             page_response.raise_for_status()
@@ -117,14 +117,14 @@ def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
 
         vacancy_salaries = predict_rub_salarys_for_HeadHunter(found_vacancies)
 
-        vacancy_statistics[vacancy] = {"vacancies_found": total_vacancies,
+        vacancy_statistics[programming_language] = {"vacancies_found": total_vacancies,
                                         "vacancies_processed": len(vacancy_salaries), 
                                         "average_salary": int(sum(vacancy_salaries)/len(vacancy_salaries)) if len(vacancy_salaries) != 0 
                                                                                                        else None}
     return vacancy_statistics
 
 
-def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
+def collect_job_statistics_from_SuperJob(programming_languages: list[str]) -> dict:
     """Сбор статистики запрашиваемых вакансий с сайта SuperJob.
 
     Args:
@@ -138,14 +138,14 @@ def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
 
     vacancy_statistics = {}
 
-    for vacancy in vacanсies:
+    for programming_language in programming_languages:
         found_vacancies = []
         total_vacancies = None
         page = 0
         continuation_pages = True
 
         while continuation_pages:
-            payload = {'town': MOSCOW_ID_SJ, 'keyword': vacancy, 'page': page}
+            payload = {'town': MOSCOW_ID_SJ, 'keyword': programming_language, 'page': page}
 
             response = get('https://api.superjob.ru/2.0/vacancies/', headers=headers, params=payload)
             response.raise_for_status()
@@ -160,7 +160,7 @@ def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
 
         vacancy_salaries = predict_rub_salarys_for_SuperJob(found_vacancies)
         
-        vacancy_statistics[vacancy] = {"vacancies_found": total_vacancies,
+        vacancy_statistics[programming_language] = {"vacancies_found": total_vacancies,
                                         "vacancies_processed": len(vacancy_salaries), 
                                         "average_salary": int(sum(vacancy_salaries)/len(vacancy_salaries)) if len(vacancy_salaries) != 0 
                                                                                                        else None}
