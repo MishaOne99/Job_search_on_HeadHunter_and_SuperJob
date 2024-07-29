@@ -171,6 +171,7 @@ def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
 def main():
     """Позволяет работать из командной строки
     """
+    load_dotenv()
     parser = argparse.ArgumentParser(description= 'Shows job statistics from Headhunter and SuperJob')
     parser.add_argument('Vacancies', type=str, nargs='+', default='Программист', help='Enter a list of professions that you are interested in')
     args = parser.parse_args()
@@ -181,5 +182,4 @@ def main():
 
 
 if __name__ == '__main__':
-    load_dotenv()
     main()
