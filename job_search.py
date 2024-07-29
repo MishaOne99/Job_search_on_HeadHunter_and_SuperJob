@@ -35,9 +35,10 @@ def predict_rub_salarys_for_HeadHunter(vacancies: list) -> list[int]:
         payment_from = salary['from'] if salary['from'] else 0
         payment_to = salary['to'] if salary['to'] else 0
 
-        if (not payment_from and not payment_to):
-            average_salary = predict_salary(payment_from, payment_to)
-            vacancy_salaries.append(int(average_salary))
+        if not payment_from and not payment_to:
+            continue
+        average_salary = predict_salary(payment_from, payment_to)
+        vacancy_salaries.append(int(average_salary))
 
     return vacancy_salaries
 
