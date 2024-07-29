@@ -8,8 +8,8 @@ from requests import get
 from display_statistics import display_statistics_working
 
 
-ID_MOSCOW_HH = 1
-ID_MOSCOW_SJ = 4
+MOSCOW_ID_HH = 1
+MOSCOW_ID_SJ = 4
 
 
 def predict_rub_salarys_for_HeadHunter(vacancies: list) -> list[int]:
@@ -90,7 +90,7 @@ def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
     Returns:
         dict: Статистика запрашиваемых вакансий
     """
-    statistic_vacancies = {}
+    vacancy_statistics = {}
 
     for vacancy in vacanсies:
         found_vacancies = []
@@ -100,7 +100,7 @@ def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
         pages_number = 1
 
         while page < pages_number:
-            payload = payload = {'text': vacancy, 'area': ID_MOSCOW_HH, 'enable_snippets': 'true', 'page': page, 'per_page': 100}
+            payload = payload = {'text': vacancy, 'area': MOSCOW_ID_HH, 'enable_snippets': 'true', 'page': page, 'per_page': 100}
 
             page_response = get('https://api.hh.ru/vacancies', params=payload)
             page_response.raise_for_status()
@@ -115,13 +115,13 @@ def collect_job_statistics_from_HeadHunter(vacanсies: list[str]) -> dict:
             
             page += 1
 
-        salary_vacancy = predict_rub_salarys_for_HeadHunter(found_vacancies)
+        vacancy_salaries = predict_rub_salarys_for_HeadHunter(found_vacancies)
 
-        statistic_vacancies[vacancy] = {"vacancies_found": total_vacancies,
-                                        "vacancies_processed": len(salary_vacancy), 
-                                        "average_salary": int(sum(salary_vacancy)/len(salary_vacancy)) if len(salary_vacancy) != 0 
+        vacancy_statistics[vacancy] = {"vacancies_found": total_vacancies,
+                                        "vacancies_processed": len(vacancy_salaries), 
+                                        "average_salary": int(sum(vacancy_salaries)/len(vacancy_salaries)) if len(vacancy_salaries) != 0 
                                                                                                        else None}
-    return statistic_vacancies
+    return vacancy_statistics
 
 
 def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
@@ -136,7 +136,7 @@ def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
     secret_key = os.getenv('SECRET_KEY_SUPER_JOB')
     headers = {'X-Api-App-Id': secret_key}
 
-    statistic_vacancies = {}
+    vacancy_statistics = {}
 
     for vacancy in vacanсies:
         found_vacancies = []
@@ -145,7 +145,7 @@ def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
         continuation_pages = True
 
         while continuation_pages:
-            payload = {'town': ID_MOSCOW_SJ, 'keyword': vacancy, 'page': page}
+            payload = {'town': MOSCOW_ID_SJ, 'keyword': vacancy, 'page': page}
 
             response = get('https://api.superjob.ru/2.0/vacancies/', headers=headers, params=payload)
             response.raise_for_status()
@@ -158,14 +158,14 @@ def collect_job_statistics_from_SuperJob(vacanсies: list[str]) -> dict:
             if not total_vacancies:
                 total_vacancies = page_payload['total']
 
-        salary_vacancy = predict_rub_salarys_for_SuperJob(found_vacancies)
+        vacancy_salaries = predict_rub_salarys_for_SuperJob(found_vacancies)
         
-        statistic_vacancies[vacancy] = {"vacancies_found": total_vacancies,
-                                        "vacancies_processed": len(salary_vacancy), 
-                                        "average_salary": int(sum(salary_vacancy)/len(salary_vacancy)) if len(salary_vacancy) != 0 
+        vacancy_statistics[vacancy] = {"vacancies_found": total_vacancies,
+                                        "vacancies_processed": len(vacancy_salaries), 
+                                        "average_salary": int(sum(vacancy_salaries)/len(vacancy_salaries)) if len(vacancy_salaries) != 0 
                                                                                                        else None}
     
-    return statistic_vacancies
+    return vacancy_statistics
 
 
 def main():
